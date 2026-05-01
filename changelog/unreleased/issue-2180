@@ -1,8 +1,12 @@
-Enhancement: Support excluding files marked by macOS as excluded from backups
+Enhancement: Improve macOS backup integration
 
 The `backup` command now supports `--exclude-macos-backup` on macOS. When set,
 restic excludes files and directories marked by macOS as excluded from system
 backups via Backup Core, such as application cache data that Time Machine would
 skip.
+
+The `backup --use-fs-snapshot` option now also works on macOS. Restic creates
+a local Time Machine snapshot for APFS volumes and reads files from a mounted
+read-only snapshot view during the backup.
 
 https://github.com/restic/restic/issues/2180

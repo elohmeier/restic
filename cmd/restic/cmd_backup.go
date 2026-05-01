@@ -138,8 +138,8 @@ func (opts *BackupOptions) AddFlags(f *pflag.FlagSet) {
 	f.BoolVar(&opts.IgnoreCtime, "ignore-ctime", false, "ignore ctime changes when checking for modified files")
 	f.BoolVarP(&opts.DryRun, "dry-run", "n", false, "do not upload or write any data, just show what would be done")
 	f.BoolVar(&opts.NoScan, "no-scan", false, "do not run scanner to estimate size of backup")
-	if runtime.GOOS == "windows" {
-		f.BoolVar(&opts.UseFsSnapshot, "use-fs-snapshot", false, "use filesystem snapshot where possible (currently only Windows VSS)")
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		f.BoolVar(&opts.UseFsSnapshot, "use-fs-snapshot", false, "use filesystem snapshot where possible (Windows VSS, macOS local snapshots)")
 	}
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
 		f.BoolVar(&opts.ExcludeCloudFiles, "exclude-cloud-files", false, "excludes online-only cloud files (such as OneDrive, iCloud drive, …)")
@@ -591,6 +591,21 @@ func runBackup(ctx context.Context, opts BackupOptions, gopts global.Options, te
 		localVss := fs.NewLocalVss(errorHandler, messageHandler, vsscfg)
 		defer localVss.DeleteSnapshots()
 		targetFS = localVss
+	}
+	if runtime.GOOS == "darwin" && opts.UseFsSnapshot {
+		errorHandler := func(item string, err error) {
+			_ = progressReporter.Error(item, err)
+		}
+
+		messageHandler := func(msg string, args ...interface{}) {
+			if !gopts.JSON {
+				printer.P(msg, args...)
+			}
+		}
+
+		localSnapshot := fs.NewLocalMacOSSnapshot(errorHandler, messageHandler)
+		defer localSnapshot.DeleteSnapshots()
+		targetFS = localSnapshot
 	}
 
 	if opts.Stdin || opts.StdinCommand {
