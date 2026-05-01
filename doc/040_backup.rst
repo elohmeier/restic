@@ -67,10 +67,12 @@ Be aware that the live status shows the processed files and not the transferred
 data. Transferred volume might be lower (due to de-duplication) or higher.
 
 On Windows, the ``--use-fs-snapshot`` option will use Windows' Volume Shadow Copy
-Service (VSS) when creating backups. Restic will transparently create a VSS
-snapshot for each volume that contains files to backup. Files are read from the
-VSS snapshot instead of the regular filesystem. This allows to backup files that are
-exclusively locked by another process during the backup.
+Service (VSS) when creating backups. On macOS, it will use local Time Machine
+snapshots for APFS volumes. Restic will transparently create a filesystem
+snapshot for each supported volume that contains files to backup. Files are read
+from the snapshot instead of the regular filesystem. This allows to backup files
+that are exclusively locked by another process during the backup, and on macOS
+provides a point-in-time view of files on snapshotted APFS volumes.
 
 You can use the following extended options to change the VSS behavior:
 

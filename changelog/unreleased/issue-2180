@@ -1,0 +1,7 @@
+Enhancement: Support filesystem snapshots for backups on macOS
+
+The `backup --use-fs-snapshot` option now also works on macOS. Restic creates
+a local Time Machine snapshot for APFS volumes and reads files from a mounted
+read-only snapshot view during the backup.
+
+https://github.com/restic/restic/issues/2180
