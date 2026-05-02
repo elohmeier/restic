@@ -26,6 +26,9 @@ type TransportOptions struct {
 	// contains the name of a file containing the TLS client certificate and private key in PEM format
 	TLSClientCertKeyFilename string
 
+	// contains a macOS Keychain identity selector for the TLS client certificate
+	TLSClientCertKeychainIdentity string
+
 	// Skip TLS certificate verification
 	InsecureTLS bool
 
@@ -104,6 +107,10 @@ func Transport(opts TransportOptions) (http.RoundTripper, error) {
 	}
 
 	if opts.TLSClientCertKeyFilename != "" {
+		if opts.TLSClientCertKeychainIdentity != "" {
+			return nil, errors.Errorf("only one of TLS client certificate file and Keychain identity can be specified")
+		}
+
 		certs, key, err := readPEMCertKey(opts.TLSClientCertKeyFilename)
 		if err != nil {
 			return nil, err
@@ -112,6 +119,14 @@ func Transport(opts TransportOptions) (http.RoundTripper, error) {
 		crt, err := tls.X509KeyPair(certs, key)
 		if err != nil {
 			return nil, errors.Errorf("parse TLS client cert or key: %v", err)
+		}
+		tr.TLSClientConfig.Certificates = []tls.Certificate{crt}
+	}
+
+	if opts.TLSClientCertKeychainIdentity != "" {
+		crt, err := loadKeychainClientCertificate(opts.TLSClientCertKeychainIdentity)
+		if err != nil {
+			return nil, err
 		}
 		tr.TLSClientConfig.Certificates = []tls.Certificate{crt}
 	}
